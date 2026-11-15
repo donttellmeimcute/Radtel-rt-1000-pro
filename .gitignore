@@ -1,0 +1,6 @@
+# Firmware/actualizador original de Radtel: no se redistribuye (copyright).
+*.exe
+stock.*
+*.hex
+build/
+__pycache__/
