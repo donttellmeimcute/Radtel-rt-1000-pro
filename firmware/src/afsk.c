@@ -92,6 +92,14 @@ static int next_bit(afsk_tx_t *t)
     }
 }
 
+int afsk_tx_next_tone(afsk_tx_t *t)
+{
+    int b = next_bit(t);
+    if (b < 0) return -1;
+    if (b == 0) t->cur_tone ^= 1;
+    return t->cur_tone;
+}
+
 int afsk_tx_next(afsk_tx_t *t)
 {
     if (t->sample_in_bit == 0) {
@@ -112,8 +120,14 @@ int afsk_tx_next(afsk_tx_t *t)
 
 void afsk_rx_init(afsk_rx_t *r, ax25_rx_cb cb)
 {
+    afsk_rx_init_rate(r, cb, AFSK_FS);
+}
+
+void afsk_rx_init_rate(afsk_rx_t *r, ax25_rx_cb cb, uint32_t fs)
+{
     memset(r, 0, sizeof(*r));
     r->cb = cb;
+    r->step = (uint32_t)(((uint64_t)1200 << 32) / fs);
 }
 
 static void rx_bit(afsk_rx_t *r, int bit)
@@ -146,24 +160,29 @@ static void rx_bit(afsk_rx_t *r, int bit)
     }
 }
 
-void afsk_rx_sample(afsk_rx_t *r, int16_t s)
+/* Nivel digital ya demodulado (mark/space) muestreado a la tasa de init */
+void afsk_rx_level(afsk_rx_t *r, int bit)
 {
-    int16_t d = r->hist[(uint8_t)(r->hpos - DELAY) & 15];
-    r->hist[r->hpos++ & 15] = s;
-    int32_t prod = ((int32_t)s * d) >> 8;
-    r->lpf += (prod - r->lpf) >> 2;               /* filtro paso bajo simple */
-    int bit = r->lpf > 0;                          /* mark (1200 Hz) -> positivo */
-
-    /* PLL de reloj de bit: fase de 32 bits, un bit cada 2^32. Se muestrea al
-     * desbordar; en cada transicion se acerca la fase a la mitad del bit. */
+    /* PLL de reloj de bit: fase de 32 bits; se muestrea al desbordar y en
+     * cada transicion se acerca la fase a la mitad del bit. */
     uint32_t prev = r->pll;
-    r->pll += (uint32_t)(0x100000000ull / SPB);
+    r->pll += r->step;
     if (r->pll < prev) rx_bit(r, bit);
     if (bit != r->lastraw) {
         int32_t err = (int32_t)(r->pll - 0x80000000u);
         r->pll -= (uint32_t)(err / 4);
     }
     r->lastraw = (uint8_t)bit;
+}
+
+/* Audio (muestras con signo a AFSK_FS): demodulador por linea de retardo */
+void afsk_rx_sample(afsk_rx_t *r, int16_t s)
+{
+    int16_t d = r->hist[(uint8_t)(r->hpos - DELAY) & 15];
+    r->hist[r->hpos++ & 15] = s;
+    int32_t prod = ((int32_t)s * d) >> 8;
+    r->lpf += (prod - r->lpf) >> 2;
+    afsk_rx_level(r, r->lpf > 0);
 }
 
 /* ===================== APRS ===================== */

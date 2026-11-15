@@ -25,3 +25,5 @@ int  lcd_text_width(const char *s, const font_t *f);
 void lcd_text_center(int y, const char *s, const font_t *f, uint16_t fg, uint16_t bg);
 /* Bitmap 1bpp fila por fila MSB-first */
 void lcd_bitmap(int x, int y, int w, int h, const uint8_t *bits, uint16_t fg, uint16_t bg);
+void lcd_stream_begin(int x, int y, int w, int h);
+void lcd_stream_bytes(const uint8_t *b, int n);

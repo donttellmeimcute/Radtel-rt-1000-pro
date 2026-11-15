@@ -7,7 +7,7 @@ ENTRY(Reset_Handler)
 MEMORY
 {
   FLASH (rx)  : ORIGIN = 0x08002800, LENGTH = 251904
-  RAM   (rwx) : ORIGIN = 0x20000000, LENGTH = 192K   /* AT32F435xC: 384 KB maximo configurable; usamos el valor por defecto */
+  RAM   (rwx) : ORIGIN = 0x20000000, LENGTH = 64K    /* el original usa ~44 KB; 64 KB es seguro en todas las variantes */
 }
 
 _estack = ORIGIN(RAM) + LENGTH(RAM);
@@ -26,6 +26,7 @@ SECTIONS
   } > RAM AT > FLASH
   .bss (NOLOAD) : {
     _sbss = .; *(.bss*) *(COMMON); . = ALIGN(4); _ebss = .;
+    end = .; _end = .;   /* inicio del heap (newlib) */
   } > RAM
   /DISCARD/ : { *(.ARM.attributes) }
 }

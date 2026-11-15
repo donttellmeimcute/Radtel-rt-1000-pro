@@ -24,19 +24,23 @@ uint16_t ax25_fcs(const uint8_t *d, int n);
 void afsk_tx_start(afsk_tx_t *t, const uint8_t *frame_wo_fcs, int len);
 /* Devuelve muestra de 8 bits (centrada en 128) o -1 al terminar */
 int afsk_tx_next(afsk_tx_t *t);
+/* Tono del siguiente bit tras NRZI: 0 = mark 1200 Hz, 1 = space 2200 Hz, -1 = fin */
+int afsk_tx_next_tone(afsk_tx_t *t);
 
 /* ---------- RX ---------- */
 typedef void (*ax25_rx_cb)(const uint8_t *frame, int len);  /* trama sin FCS, FCS ya validado */
 typedef struct {
     int16_t hist[16]; uint8_t hpos;
-    uint32_t pll; uint8_t last_bit, ones, shift, lastraw, acc;
+    uint32_t pll, step; uint8_t last_bit, ones, shift, lastraw, acc;
     uint16_t nbits, len;
     uint8_t buf[AX25_MAX_FRAME]; uint8_t in_frame;
     int32_t lpf;
     ax25_rx_cb cb;
 } afsk_rx_t;
 void afsk_rx_init(afsk_rx_t *r, ax25_rx_cb cb);
-void afsk_rx_sample(afsk_rx_t *r, int16_t s);   /* muestra con signo, sin DC */
+void afsk_rx_init_rate(afsk_rx_t *r, ax25_rx_cb cb, uint32_t fs);
+void afsk_rx_sample(afsk_rx_t *r, int16_t s);   /* muestra de audio con signo, sin DC */
+void afsk_rx_level(afsk_rx_t *r, int level);   /* nivel ya demodulado (modem externo) */
 
 /* Formato APRS: posicion sin comprimir "!DDMM.mmN/DDDMM.mmW>comentario" */
 int aprs_position(char *out, int32_t lat_e7, int32_t lon_e7, char sym_table, char sym,

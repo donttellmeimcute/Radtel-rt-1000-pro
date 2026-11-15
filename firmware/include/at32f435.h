@@ -102,3 +102,55 @@ typedef struct {
 #define DAC_D1DTH8R REG32(0x40007410)   /* canal 1, 8 bits alineado a la derecha */
 #define DAC_D2DTH12R REG32(0x40007414)
 #define DAC_D2DTH8R REG32(0x4000741C)
+
+/* ---- I2C (estilo nuevo, con registro de temporizacion) ---- */
+typedef struct {
+    volatile uint32_t ctrl1, ctrl2, oaddr1, oaddr2, clkctrl, timeout, sts, clr, pec, rxdt, txdt;
+} i2c_t;
+#define I2C1 ((i2c_t *)0x40005400)
+#define I2C2 ((i2c_t *)0x40005800)
+#define I2C3 ((i2c_t *)0x40005C00)
+#define I2C_STS_TDIS  (1u << 1)
+#define I2C_STS_RDBF  (1u << 2)
+#define I2C_STS_ACKFAIL (1u << 4)
+#define I2C_STS_STOPF (1u << 5)
+#define I2C_STS_TDC   (1u << 6)
+#define CRM_APB1EN_I2C2 (1u << 22)
+
+/* ---- Temporizadores ---- */
+typedef struct {
+    volatile uint32_t ctrl1, ctrl2, stctrl, iden, ists, swevt, cm1, cm2, cctrl, cval, div, pr, rpr,
+                      c1dt, c2dt, c3dt, c4dt, brk, dmactrl, dmadt;
+} tmr_t;
+#define TMR1  ((tmr_t *)0x40010000)
+#define TMR2  ((tmr_t *)0x40000000)
+#define TMR3  ((tmr_t *)0x40000400)
+#define TMR13 ((tmr_t *)0x40001C00)
+#define CRM_APB1EN_TMR2  (1u << 0)
+#define CRM_APB1EN_TMR13 (1u << 7)
+#define CRM_APB2EN_TMR1  (1u << 0)
+#define CRM_APB1EN_UART4 (1u << 19)
+
+/* ---- ADC1 (disposicion compatible estilo STM32F4) ---- */
+typedef struct {
+    volatile uint32_t sts, ctrl1, ctrl2, spt1, spt2, pcdto1, pcdto2, pcdto3, pcdto4, vmhb, vmlb,
+                      osq1, osq2, osq3, psq, pdt1, pdt2, pdt3, pdt4, odt;
+} adc_t;
+#define ADC1 ((adc_t *)0x40012000)
+#define ADC_CCTRL REG32(0x40012304)
+
+/* ---- NVIC ---- */
+#define NVIC_ISER(n) REG32(0xE000E100 + 4 * (n))
+#define NVIC_IPR8(n) (*(volatile uint8_t *)(0xE000E400 + (n)))
+static inline void nvic_enable(int irq, uint8_t prio)
+{
+    NVIC_IPR8(irq) = (uint8_t)(prio << 4);
+    NVIC_ISER(irq >> 5) = 1u << (irq & 31);
+}
+#define IRQ_TMR1_OVF 25
+#define IRQ_TMR2     28
+#define IRQ_TMR3     29
+#define IRQ_USART2   38
+#define IRQ_USART6   71
+#define USART_CTRL1_RDBFIEN (1u << 5)
+#define CRM_AHBEN1_DMA1 (1u << 22)

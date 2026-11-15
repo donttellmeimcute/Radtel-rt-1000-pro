@@ -169,3 +169,8 @@ void lcd_text_center(int y, const char *s, const font_t *f, uint16_t fg, uint16_
     int w = lcd_text_width(s, f);
     lcd_text((LCD_W - w) / 2, y, s, f, fg, bg);
 }
+
+/* Envio crudo en el orden nativo del panel (columnas, de abajo arriba), con
+ * los bytes invertidos como hace el original. Usado para el logo de la flash SPI. */
+void lcd_stream_begin(int x, int y, int w, int h) { window(x, y, w, h); }
+void lcd_stream_bytes(const uint8_t *b, int n) { while (n--) wr8((uint8_t)~*b++); }

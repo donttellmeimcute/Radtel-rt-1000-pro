@@ -34,6 +34,15 @@ int main(void)
     printf("muestras %d, tramas recibidas %d: '%s'\n", cnt, got, gotinfo);
     assert(got >= 1 && !strcmp(gotinfo, info));
 
+    /* Ruta de nivel digital (modem externo) a la tasa del TMR3 del radio: 26373 Hz, 22 ticks/bit */
+    got = 0; gotinfo[0] = 0;
+    afsk_tx_start(&tx, fr, n); afsk_rx_init_rate(&rx, cb, 26373);
+    int tone;
+    while ((tone = afsk_tx_next_tone(&tx)) >= 0)
+        for (int k = 0; k < 22; k++) afsk_rx_level(&rx, tone);
+    printf("nivel: tramas %d '%s'\n", got, gotinfo);
+    assert(got >= 1 && !strcmp(gotinfo, info));
+
     /* NMEA */
     gps_fix_t f = {0};
     const char *nm = "$GPRMC,123519,A,4807.038,N,01131.000,E,022.4,084.4,230394,003.1,W*6A\r\n"

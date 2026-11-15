@@ -1,12 +1,19 @@
 /* Reloj del sistema: replica la configuracion del firmware original
- * (FUN_0802304c): HICK 8 MHz -> PLL (ns=96, ms=1, fr=/8) = 96 MHz,
- * AHB /1, APB2 /1, APB1 /2, LDO 1.3 V.                                         */
+ * (FUN_0802304c): HICK -> PLL (ns=96, ms=1, fr=/8),
+ * AHB /1, APB2 /1, APB1 /2, LDO 1.3 V. Reloj efectivo 48 MHz (ver system.h).                                         */
 #include "at32f435.h"
 #include "system.h"
 
 volatile uint32_t g_ticks_ms;
 
-void SysTick_Handler(void) { g_ticks_ms++; }
+void keys_tick_1ms(void);
+void audio_tick_1ms(void);
+void SysTick_Handler(void)
+{
+    g_ticks_ms++;
+    keys_tick_1ms();
+    audio_tick_1ms();
+}
 
 static void crm_autostep(int on)
 {
@@ -53,6 +60,6 @@ void delay_ms(uint32_t ms)
 void delay_us(uint32_t us)
 {
     /* ~4 ciclos por iteracion a 96 MHz; aproximado, suficiente para bit-bang */
-    volatile uint32_t n = us * (SYSCLK_HZ / 4000000u);
+    volatile uint32_t n = us * (SYSCLK_HZ / 4000000u + 1);
     while (n--) { }
 }
