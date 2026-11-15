@@ -22,6 +22,20 @@ static void crm_autostep(int on)
 
 void system_clock_init(void)
 {
+    /* Volver al estado de reset (igual que SystemInit del original): el
+     * bootloader puede haber dejado el PLL encendido. */
+    crm_autostep(1);
+    CRM_CTRL |= 1u;                            /* HICK on */
+    while (!(CRM_CTRL & (1u << 1))) { }
+    CRM_CFG &= ~3u;                            /* SCLK = HICK */
+    while ((CRM_CFG >> 2) & 3u) { }
+    CRM_CTRL &= 0xFEF2FFFFu;                   /* PLL, HEXT, CFD off */
+    CRM_CFG = 0x40000000u;
+    CRM_PLLCFG = 0x00033002u;
+    CRM_MISC1 = 0x000F0000u;
+    CRM_CLKINT = 0x009F0000u;
+    crm_autostep(0);
+
     FLASH_PSR = 0x154;                         /* mismo valor que el original */
     CRM_APB1EN |= CRM_APB1EN_PWC;
     PWC_LDOOV = (PWC_LDOOV & ~3u) | 3u;        /* LDO 1.3 V */
