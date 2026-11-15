@@ -85,3 +85,20 @@ typedef struct {
 #define SCB_VTOR  REG32(0xE000ED08)
 #define SCB_AIRCR REG32(0xE000ED0C)
 #define SCB_CPACR REG32(0xE000ED88)
+
+/* ---- SPI ---- */
+typedef struct {
+    volatile uint32_t ctrl1, ctrl2, sts, dt, cpoly, rcrc, tcrc, i2sctrl, i2sclk;
+} spi_t;
+#define SPI1 ((spi_t *)0x40013000)
+#define SPI2 ((spi_t *)0x40003800)
+#define SPI3 ((spi_t *)0x40003C00)
+#define SPI_STS_RDBF (1u << 0)
+#define SPI_STS_TDBE (1u << 1)
+#define SPI_STS_BF   (1u << 7)
+
+/* ---- DAC ---- */
+#define DAC_CTRL    REG32(0x40007400)
+#define DAC_D1DTH8R REG32(0x40007410)   /* canal 1, 8 bits alineado a la derecha */
+#define DAC_D2DTH12R REG32(0x40007414)
+#define DAC_D2DTH8R REG32(0x4000741C)
